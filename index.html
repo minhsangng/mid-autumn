@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>MAYN</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Be+Vietnam+Pro:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #f6ecd4;
+      --ink-dim: #cdbb92;
+      --gold: #e7b866;
+      --bg-a: #050414;
+      --bg-b: #0b0d2a;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg-a: #050414;
+        --bg-b: #0b0d2a;
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg-a: #050414;
+      --bg-b: #0b0d2a;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg-a);
+      overflow: hidden;
+      font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+    }
+
+    html {
+      scroll-padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    #stage {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+    }
+
+    #stage canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 4;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: calc(28px + env(safe-area-inset-top, 0px)) 28px calc(26px + env(safe-area-inset-bottom, 0px)) 28px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 2.2s ease;
+    }
+
+    .overlay.revealed {
+      opacity: 1;
+    }
+
+    .intro-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      cursor: pointer;
+      transition: opacity 1s ease;
+    }
+
+    .intro-layer.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .start-btn {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      background: rgba(12, 12, 28, 0.4);
+      border: 1px solid rgba(231, 184, 102, 0.4);
+      padding: 1rem;
+      border-radius: 50%;
+      aspect-ratio: 1 / 1;
+      color: var(--ink);
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 0.95rem;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      transition: border-color .3s ease, background .3s ease, transform .3s ease;
+    }
+
+    .start-btn:hover,
+    .start-btn:focus-visible {
+      border: 3px solid rgba(231, 184, 102, 0.8);
+      filter: drop-shadow(0 0 10px rgba(231, 184, 102, 0.8));
+      background: rgba(22, 20, 42, 0.55);
+      transform: scale(1.03);
+    }
+
+    .start-btn:focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 4px;
+    }
+
+    .start-btn-dot {
+      width: 1rem;
+      height: 1rem;
+      border-radius: 50%;
+      flex: none;
+      background: radial-gradient(circle, #fff2c9 0%, #ffd27a 45%, rgba(255, 180, 60, 0) 75%);
+      box-shadow: 0 0 12px 3px rgba(255, 200, 110, 0.75);
+      animation: firefly-pulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes firefly-pulse {
+      0%,
+      100% {
+        opacity: 0.35;
+        transform: scale(0.8);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.2);
+      }
+    }
+
+    .heading {
+      max-width: 40vw;
+      margin-top: 5rems;
+      user-select: none;
+      z-index: 0;
+      height: fit-content;
+    }
+
+    .heading h1 {
+      margin: 0;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 600;
+      font-size: clamp(2rem, 5vw, 3.1rem);
+      color: var(--ink);
+      letter-spacing: 0.01em;
+      text-shadow: 0 0 26px rgba(231, 184, 102, 0.45), 0 2px 18px rgba(0, 0, 0, 0.6);
+    }
+
+    .heading p {
+      margin: 10px 0 0;
+      font-size: 0.98rem;
+      line-height: 1.6;
+      color: var(--ink-dim);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+      max-width: 34ch;
+    }
+
+    .hint {
+      align-self: flex-start;
+      font-size: 0.82rem;
+      color: var(--ink-dim);
+      opacity: 0.85;
+      letter-spacing: 0.02em;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+      transition: opacity 1.2s ease;
+    }
+
+    .hint.faded {
+      opacity: 0;
+    }
+
+    .bottom-row {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    
+    #photoInput {
+      aspect-ratio: 1 / 1;
+      position: absolute;
+    }
+
+    .action-btn {
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(12, 12, 28, 0.45);
+      border: 1px solid rgba(231, 184, 102, 0.45);
+      padding: 11px 20px;
+      border-radius: 999px;
+      color: var(--ink);
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .5s ease, transform .5s ease, border-color .3s ease, background .3s ease;
+    }
+
+    .action-btn.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .action-btn:hover,
+    .action-btn:focus-visible {
+      border-color: rgba(231, 184, 102, 0.85);
+      background: rgba(22, 20, 42, 0.6);
+    }
+
+    .action-btn:focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 3px;
+    }
+
+    #loading {
+      position: fixed;
+      inset: 0;
+      background: #050414;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 14px;
+      z-index: 10;
+      transition: opacity 0.9s ease;
+    }
+
+    #loading.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .lantern-mark {
+      font-size: 2.4rem;
+      filter: drop-shadow(0 0 18px rgba(231, 140, 60, 0.65));
+      animation: sway 2.4s ease-in-out infinite;
+    }
+
+    @keyframes sway {
+
+      0%,
+      100% {
+        transform: rotate(-6deg);
+      }
+
+      50% {
+        transform: rotate(6deg);
+      }
+    }
+
+    #loading span {
+      font-size: 0.85rem;
+      color: var(--ink-dim);
+      letter-spacing: 0.03em;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="loading">
+    <div class="lantern-mark">🏮</div>
+  </div>
+
+  <div id="stage"></div>
+
+  <div class="overlay" id="overlay">
+    <div class="heading">
+      <h1>Trung Thu 2026</h1>
+      <p>Chúc cho em sẽ luôn gặp nhiều điều may mắn, mọi thứ như ý nguyện. Chúc em luôn tỏa sáng như ánh Trăng rằm.</p>
+      <p>Happy Mid-Autumn Bae!!!</p>
+    </div>
+    <div class="bottom-row">
+      <div class="hint" id="hint">Di chuyển chuột hoặc chạm màn hình để ngắm đèn lồng từ nhiều góc</div>
+      <button class="action-btn" id="actionBtn" type="button"></button>
+    </div>
+  </div>
+
+  <div class="intro-layer" id="introLayer">
+    <button class="start-btn" id="startBtn" type="button">
+      <span class="start-btn-dot" aria-hidden="true"></span>
+      <span>Thắp đèn lồng</span>
+    </button>
+  </div>
+
+  <image id="photoInput" src="./mayn.jpg" alt="Mayn" height="100px" width="100px" style="display:none">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      var loadingEl = document.getElementById('loading');
+      var hintEl = document.getElementById('hint');
+      var stage = document.getElementById('stage');
+      var overlayEl = document.getElementById('overlay');
+      var introLayer = document.getElementById('introLayer');
+      var startBtn = document.getElementById('startBtn');
+      var actionBtn = document.getElementById('actionBtn');
+      var photoInput = document.getElementById('photoInput');
+
+      if (typeof THREE === 'undefined') {
+        loadingEl.innerHTML = '<span style="color:#e7b866">Không thể tải thư viện three.js. Vui lòng kiểm tra kết nối mạng và tải lại trang.</span>';
+        return;
+      }
+
+      /* ---------- helpers: procedural textures ---------- */
+
+      function makeCanvas(size) {
+        var c = document.createElement('canvas');
+        c.width = size; c.height = size;
+        return c;
+      }
+
+      function createGlowTexture(size, stops) {
+        var canvas = makeCanvas(size);
+        var ctx = canvas.getContext('2d');
+        var grd = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+        stops.forEach(function (s) { grd.addColorStop(s[0], s[1]); });
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, size, size);
+        var tex = new THREE.CanvasTexture(canvas);
+        tex.needsUpdate = true;
+        return tex;
+      }
+
+      function drawStarShape(ctx, cx, cy, r) {
+        ctx.beginPath();
+        for (var i = 0; i < 5; i++) {
+          var angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+          var x = cx + Math.cos(angle) * r;
+          var y = cy + Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      function createLanternTexture() {
+        var w = 512, h = 512;
+        var canvas = makeCanvas(w); canvas.height = h;
+        var ctx = canvas.getContext('2d');
+
+        var grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#ff8952');
+        grad.addColorStop(0.5, '#e2432a');
+        grad.addColorStop(1, '#b8271c');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        var stripes = 14;
+        for (var i = 0; i < stripes; i++) {
+          ctx.globalAlpha = (i % 2 === 0) ? 0.10 : 0.06;
+          ctx.fillStyle = (i % 2 === 0) ? '#ffffff' : '#000000';
+          ctx.fillRect(i * (w / stripes), 0, (w / stripes) * 0.55, h);
+        }
+        ctx.globalAlpha = 1;
+
+        ctx.fillStyle = 'rgba(255,214,120,0.9)';
+        for (var s = 0; s < 34; s++) {
+          var x = Math.random() * w;
+          var y = h * 0.12 + Math.random() * h * 0.76;
+          drawStarShape(ctx, x, y, 5 + Math.random() * 6);
+        }
+
+        ctx.fillStyle = 'rgba(255,214,120,0.95)';
+        ctx.fillRect(0, 0, w, 16);
+        ctx.fillRect(0, h - 16, w, 16);
+
+        var tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.needsUpdate = true;
+        return tex;
+      }
+
+      function createMoonTexture() {
+        var size = 512;
+        var canvas = makeCanvas(size);
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fbf3dc';
+        ctx.fillRect(0, 0, size, size);
+        ctx.fillStyle = 'rgba(214,197,156,0.45)';
+        for (var i = 0; i < 26; i++) {
+          var x = Math.random() * size, y = Math.random() * size, r = 10 + Math.random() * 30;
+          ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        for (var j = 0; j < 16; j++) {
+          var x2 = Math.random() * size, y2 = Math.random() * size, r2 = 4 + Math.random() * 10;
+          ctx.beginPath(); ctx.arc(x2, y2, r2, 0, Math.PI * 2); ctx.fill();
+        }
+        var tex = new THREE.CanvasTexture(canvas);
+        tex.needsUpdate = true;
+        return tex;
+      }
+
+      function createGroundTexture() {
+        var size = 512;
+        var canvas = makeCanvas(size);
+        var ctx = canvas.getContext('2d');
+        var grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 1.3);
+        grad.addColorStop(0, '#102c1f');
+        grad.addColorStop(1, '#050c09');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, size, size);
+        for (var i = 0; i < 1400; i++) {
+          ctx.fillStyle = Math.random() > 0.5 ? 'rgba(35,80,52,0.35)' : 'rgba(6,20,14,0.4)';
+          var x = Math.random() * size, y = Math.random() * size;
+          ctx.fillRect(x, y, 1.4, 1.4);
+        }
+        var tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(6, 6);
+        tex.needsUpdate = true;
+        return tex;
+      }
+
+      // Loads a user-selected image file, center-crops it to a 1:1 square
+      // (so any photo shape becomes a square keepsake), and hands back a texture.
+      function loadImageAsSquareTexture(file, callback) {
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          var img = new Image();
+          img.onload = function () {
+            var side = Math.min(img.width, img.height);
+            var sx = (img.width - side) / 2;
+            var sy = (img.height - side) / 2;
+            var outSize = 720;
+            var canvas = makeCanvas(outSize);
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(img, sx, sy, side, side, 0, 0, outSize, outSize);
+            var tex = new THREE.CanvasTexture(canvas);
+            tex.needsUpdate = true;
+            callback(tex);
+          };
+          img.onerror = function () { callback(null); };
+          img.src = ev.target.result;
+        };
+        reader.onerror = function () { callback(null); };
+        reader.readAsDataURL(file);
+      }
+
+      /* ---------- scene setup ---------- */
+
+      var scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x05041a, 0.024);
+
+      var camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 260);
+      var camDist = 11;
+      camera.position.set(0, 3.3, camDist);
+
+      var renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.setSize(innerWidth, innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      if ('outputEncoding' in renderer) renderer.outputEncoding = THREE.sRGBEncoding;
+      stage.appendChild(renderer.domElement);
+
+      /* ---------- lights ---------- */
+
+      var ambient = new THREE.AmbientLight(0x3a4a8a, 0);
+      scene.add(ambient);
+
+      var moonLight = new THREE.DirectionalLight(0xcfe0ff, 0);
+      moonLight.position.set(-9, 16, -7);
+      moonLight.target.position.set(0, 2, 0);
+      moonLight.castShadow = true;
+      moonLight.shadow.mapSize.set(2048, 2048);
+      moonLight.shadow.camera.left = -10;
+      moonLight.shadow.camera.right = 10;
+      moonLight.shadow.camera.top = 10;
+      moonLight.shadow.camera.bottom = -10;
+      moonLight.shadow.camera.near = 1;
+      moonLight.shadow.camera.far = 40;
+      moonLight.shadow.bias = -0.0018;
+      scene.add(moonLight);
+      scene.add(moonLight.target);
+
+      var rimLight = new THREE.PointLight(0x6a7fe0, 0, 20, 2);
+      rimLight.position.set(6, 6, -4);
+      scene.add(rimLight);
+
+      /* ---------- textures ---------- */
+
+      var lanternTex = createLanternTexture();
+      var moonTex = createMoonTexture();
+      var groundTex = createGroundTexture();
+      var sparkGlowTex = createGlowTexture(64, [[0, 'rgba(255,235,180,1)'], [0.4, 'rgba(255,200,120,0.75)'], [1, 'rgba(255,180,80,0)']]);
+      var moonGlowTex = createGlowTexture(256, [[0, 'rgba(255,250,235,1)'], [0.22, 'rgba(255,245,222,0.55)'], [0.55, 'rgba(255,235,190,0.16)'], [1, 'rgba(255,235,190,0)']]);
+      var flameGlowTex = createGlowTexture(128, [[0, 'rgba(255,228,185,1)'], [0.4, 'rgba(255,150,60,0.55)'], [1, 'rgba(255,100,30,0)']]);
+
+      /* ---------- ground ---------- */
+
+      var ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(70, 70),
+        new THREE.MeshStandardMaterial({ map: groundTex, roughness: 1, metalness: 0 })
+      );
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = -2.6;
+      ground.receiveShadow = true;
+      scene.add(ground);
+
+      /* ---------- moon ---------- */
+
+      var moon = new THREE.Mesh(
+        new THREE.SphereGeometry(1.7, 48, 48),
+        new THREE.MeshStandardMaterial({ map: moonTex, color: 0xfff6df, emissive: 0xfff1cf, emissiveIntensity: 0, roughness: 1 })
+      );
+      moon.position.set(-9, 15.5, -20);
+      scene.add(moon);
+
+      var moonGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: moonGlowTex, color: 0xfff3d6, transparent: true, opacity: 0,
+        blending: THREE.AdditiveBlending, depthWrite: false
+      }));
+      moonGlow.scale.set(10, 10, 1);
+      moonGlow.position.copy(moon.position);
+      scene.add(moonGlow);
+
+      /* ---------- starfield ---------- */
+
+      function createStarField() {
+        var count = 1500;
+        var positions = new Float32Array(count * 3);
+        var phases = new Float32Array(count);
+        var sizes = new Float32Array(count);
+        for (var i = 0; i < count; i++) {
+          var r = 45 + Math.random() * 60;
+          var theta = Math.random() * Math.PI * 2;
+          var phi = Math.acos(Math.random() * 0.9);
+          positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+          positions[i * 3 + 1] = Math.abs(r * Math.cos(phi)) + 1.5;
+          positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+          phases[i] = Math.random() * Math.PI * 2;
+          sizes[i] = 0.4 + Math.random() * 1.5;
+        }
+        var geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geo.setAttribute('aPhase', new THREE.BufferAttribute(phases, 1));
+        geo.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
+
+        var mat = new THREE.ShaderMaterial({
+          uniforms: { uTime: { value: 0 }, uOpacity: { value: 0 } },
+          vertexShader: [
+            'attribute float aPhase;',
+            'attribute float aSize;',
+            'uniform float uTime;',
+            'varying float vTwinkle;',
+            'void main(){',
+            '  vTwinkle = 0.4 + 0.6 * sin(uTime * 1.4 + aPhase);',
+            '  vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);',
+            '  gl_PointSize = aSize * (240.0 / -mvPosition.z);',
+            '  gl_Position = projectionMatrix * mvPosition;',
+            '}'
+          ].join('\n'),
+          fragmentShader: [
+            'varying float vTwinkle;',
+            'uniform float uOpacity;',
+            'void main(){',
+            '  float d = length(gl_PointCoord - vec2(0.5));',
+            '  float alpha = smoothstep(0.5, 0.0, d);',
+            '  gl_FragColor = vec4(1.0, 1.0, 1.0, alpha * (0.3 + 0.7 * vTwinkle) * uOpacity);',
+            '}'
+          ].join('\n'),
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending
+        });
+
+        return new THREE.Points(geo, mat);
+      }
+
+      var stars = createStarField();
+      scene.add(stars);
+
+      /* ---------- small utilities ---------- */
+
+      function getWorldPos(obj) {
+        var v = new THREE.Vector3();
+        obj.getWorldPosition(v);
+        return v;
+      }
+
+      function backOutEase(x) {
+        var c1 = 1.70158, c3 = c1 + 1;
+        var m = x - 1;
+        return 1 + c3 * m * m * m + c1 * m * m;
+      }
+
+      // Short-lived puffs of glowing dust used for the release / landing / gift
+      // reveal moments. Each burst is plain data updated every frame in animate()
+      // and cleaned up once its lifetime elapses.
+      var activeBursts = [];
+      function spawnBurst(position, colorHex, count, spread, life) {
+        count = count || 40; spread = spread || 3; life = life || 1.2;
+        var basePositions = new Float32Array(count * 3);
+        var velocities = new Float32Array(count * 3);
+        for (var i = 0; i < count; i++) {
+          basePositions[i * 3] = position.x;
+          basePositions[i * 3 + 1] = position.y;
+          basePositions[i * 3 + 2] = position.z;
+          var dir = new THREE.Vector3((Math.random() - 0.5), Math.random() * 0.7 + 0.15, (Math.random() - 0.5)).normalize();
+          var sp = spread * (0.5 + Math.random() * 0.5);
+          velocities[i * 3] = dir.x * sp;
+          velocities[i * 3 + 1] = dir.y * sp;
+          velocities[i * 3 + 2] = dir.z * sp;
+        }
+        var geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(basePositions.slice(), 3));
+        var mat = new THREE.PointsMaterial({
+          size: 0.17, map: sparkGlowTex, color: colorHex, transparent: true,
+          depthWrite: false, blending: THREE.AdditiveBlending, opacity: 1
+        });
+        var pts = new THREE.Points(geo, mat);
+        scene.add(pts);
+        activeBursts.push({ points: pts, base: basePositions, velocities: velocities, born: clock.getElapsedTime(), life: life });
+      }
+
+      function updateBursts(t) {
+        for (var b = activeBursts.length - 1; b >= 0; b--) {
+          var burst = activeBursts[b];
+          var age = t - burst.born;
+          if (age >= burst.life) {
+            scene.remove(burst.points);
+            burst.points.geometry.dispose();
+            burst.points.material.dispose();
+            activeBursts.splice(b, 1);
+            continue;
+          }
+          var arr = burst.points.geometry.attributes.position.array;
+          var n = arr.length / 3;
+          for (var i = 0; i < n; i++) {
+            arr[i * 3] = burst.base[i * 3] + burst.velocities[i * 3] * age;
+            arr[i * 3 + 1] = burst.base[i * 3 + 1] + burst.velocities[i * 3 + 1] * age - 0.9 * age * age;
+            arr[i * 3 + 2] = burst.base[i * 3 + 2] + burst.velocities[i * 3 + 2] * age;
+          }
+          burst.points.geometry.attributes.position.needsUpdate = true;
+          burst.points.material.opacity = 1 - age / burst.life;
+        }
+      }
+
+      /* ---------- lantern group ---------- */
+
+      var goldMat = new THREE.MeshStandardMaterial({ color: 0xe7b866, metalness: 0.75, roughness: 0.28 });
+      var stringMat = new THREE.MeshStandardMaterial({ color: 0x7a5230, roughness: 0.85 });
+      var tasselMat = new THREE.MeshStandardMaterial({ color: 0xcf3a2a, roughness: 0.6 });
+
+      // The main lantern gets its own material instances (cloned from the shared
+      // ones above) so that releasing it and fading it out never affects the
+      // background lanterns or the gift box, which keep using the shared gold.
+      var mainGoldMat = goldMat.clone();
+      var mainStringMat = stringMat.clone();
+      var mainTasselMat = tasselMat.clone();
+
+      var lanternAnchor = new THREE.Group();
+      lanternAnchor.position.set(0, 5.4, 0);
+      scene.add(lanternAnchor);
+
+      var swingGroup = new THREE.Group();
+      lanternAnchor.add(swingGroup);
+
+      var stringLength = 1.7;
+      var hangString = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.02, 0.02, stringLength, 8),
+        mainStringMat
+      );
+      hangString.position.y = -stringLength / 2;
+      swingGroup.add(hangString);
+
+      var lanternGroup = new THREE.Group();
+      lanternGroup.position.y = -stringLength;
+      swingGroup.add(lanternGroup);
+
+      var ring = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.022, 8, 16), mainGoldMat);
+      ring.rotation.x = Math.PI / 2;
+      ring.position.y = 0.1;
+      lanternGroup.add(ring);
+
+      var capTop = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.34, 0.22, 16), mainGoldMat);
+      capTop.castShadow = true; capTop.receiveShadow = true;
+      lanternGroup.add(capTop);
+
+      var latheProfile = [
+        new THREE.Vector2(0.02, 0.10),
+        new THREE.Vector2(0.34, 0.02),
+        new THREE.Vector2(0.64, -0.30),
+        new THREE.Vector2(0.80, -0.72),
+        new THREE.Vector2(0.80, -1.14),
+        new THREE.Vector2(0.64, -1.56),
+        new THREE.Vector2(0.34, -1.86),
+        new THREE.Vector2(0.02, -1.94)
+      ];
+      var body = new THREE.Mesh(
+        new THREE.LatheGeometry(latheProfile, 14),
+        new THREE.MeshStandardMaterial({
+          map: lanternTex,
+          emissive: 0xff6a2f,
+          emissiveMap: lanternTex,
+          emissiveIntensity: 0,
+          roughness: 0.55,
+          metalness: 0.05,
+          side: THREE.DoubleSide
+        })
+      );
+      body.castShadow = true;
+      body.receiveShadow = true;
+      lanternGroup.add(body);
+
+      var candleLight = new THREE.PointLight(0xffa14f, 0, 9, 2);
+      candleLight.position.set(0, -0.95, 0);
+      lanternGroup.add(candleLight);
+
+      var flameGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: flameGlowTex, color: 0xffb066, transparent: true,
+        blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0
+      }));
+      flameGlow.scale.set(1.9, 1.9, 1);
+      flameGlow.position.set(0, -0.95, 0);
+      lanternGroup.add(flameGlow);
+
+      var ringTopEdge = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.02, 8, 20), mainGoldMat);
+      ringTopEdge.rotation.x = Math.PI / 2;
+      ringTopEdge.position.y = 0.03;
+      lanternGroup.add(ringTopEdge);
+
+      var ringBottomEdge = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.02, 8, 20), mainGoldMat);
+      ringBottomEdge.rotation.x = Math.PI / 2;
+      ringBottomEdge.position.y = -1.86;
+      lanternGroup.add(ringBottomEdge);
+
+      var capBottom = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.2, 0.2, 16), mainGoldMat);
+      capBottom.position.y = -1.98;
+      capBottom.castShadow = true;
+      lanternGroup.add(capBottom);
+
+      var tasselStem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.32, 6), mainStringMat);
+      tasselStem.position.y = -2.24;
+      lanternGroup.add(tasselStem);
+
+      var tasselBulb = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 12), mainTasselMat);
+      tasselBulb.position.y = -2.42;
+      lanternGroup.add(tasselBulb);
+
+      var fringeCount = 10;
+      for (var f = 0; f < fringeCount; f++) {
+        var angle = (f / fringeCount) * Math.PI * 2;
+        var thread = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.006, 0.3, 4), mainTasselMat);
+        thread.position.set(Math.cos(angle) * 0.04, -2.42 - 0.15, Math.sin(angle) * 0.04);
+        thread.rotation.z = Math.cos(angle) * 0.4;
+        thread.rotation.x = Math.sin(angle) * 0.4;
+        lanternGroup.add(thread);
+      }
+
+      /* ---------- small background lanterns ---------- */
+
+      var BG_LANTERN_EMISSIVE = 0.85;
+      var BG_LANTERN_LIGHT = 0.7;
+
+      function createSimpleLantern(hue) {
+        var group = new THREE.Group();
+        var col = new THREE.Color().setHSL(hue, 0.72, 0.55);
+        var emis = new THREE.Color().setHSL(hue, 0.85, 0.42);
+        var mat = new THREE.MeshStandardMaterial({ color: col, emissive: emis, emissiveIntensity: 0, roughness: 0.6 });
+
+        var bodyMesh = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 12), mat);
+        bodyMesh.scale.set(1, 1.25, 1);
+        bodyMesh.castShadow = true;
+        group.add(bodyMesh);
+
+        var cap = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.16, 8), goldMat);
+        cap.position.y = 0.72;
+        group.add(cap);
+
+        var tail = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.2, 6), tasselMat);
+        tail.position.y = -0.78;
+        tail.rotation.x = Math.PI;
+        group.add(tail);
+
+        var glow = new THREE.PointLight(emis.getHex(), 0, 4, 2);
+        group.add(glow);
+
+        return { group: group, mat: mat, light: glow };
+      }
+
+      var bgLanterns = [];
+      var bgConfigs = [
+        { x: -4.2, y: 6.6, z: -3.0, hue: 0.09, scale: 0.62, amp: 0.16, speed: 0.42, phase: 1.1 },
+        { x: 4.6, y: 5.1, z: -4.4, hue: 0.13, scale: 0.48, amp: 0.2, speed: 0.5, phase: 2.4 },
+        { x: 2.6, y: 7.4, z: -6.0, hue: 0.05, scale: 0.4, amp: 0.14, speed: 0.36, phase: 0.4 }
+      ];
+      bgConfigs.forEach(function (cfg) {
+        var anchor = new THREE.Group();
+        anchor.position.set(cfg.x, cfg.y, cfg.z);
+        scene.add(anchor);
+        var swing = new THREE.Group();
+        anchor.add(swing);
+        var thread = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.5, 6), stringMat);
+        thread.position.y = -0.25;
+        swing.add(thread);
+        var built = createSimpleLantern(cfg.hue);
+        built.group.position.y = -0.5;
+        built.group.scale.setScalar(cfg.scale);
+        swing.add(built.group);
+        bgLanterns.push({ swing: swing, cfg: cfg, mat: built.mat, light: built.light });
+      });
+
+      /* ---------- gift box (release reward) ---------- */
+
+      var giftBoxMat = new THREE.MeshStandardMaterial({ color: 0x9c2a2f, roughness: 0.5, metalness: 0.08 });
+      var lidPivot = null;
+
+      function buildGiftBox() {
+        var group = new THREE.Group();
+
+        var base = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.85, 1.1), giftBoxMat);
+        base.position.y = 0.425;
+        base.castShadow = true;
+        base.receiveShadow = true;
+        group.add(base);
+
+        var ribbonA = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.87, 1.13), goldMat);
+        ribbonA.position.y = 0.425;
+        group.add(ribbonA);
+        var ribbonB = new THREE.Mesh(new THREE.BoxGeometry(1.13, 0.87, 0.2), goldMat);
+        ribbonB.position.y = 0.425;
+        group.add(ribbonB);
+
+        lidPivot = new THREE.Group();
+        lidPivot.position.set(0, 0.85, -0.58);
+        group.add(lidPivot);
+
+        var lid = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.22, 1.18), giftBoxMat);
+        lid.position.set(0, 0.11, 0.59);
+        lid.castShadow = true;
+        lidPivot.add(lid);
+
+        var lidRibbonA = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.24, 1.2), goldMat);
+        lidRibbonA.position.copy(lid.position);
+        lidPivot.add(lidRibbonA);
+        var lidRibbonB = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.24, 0.22), goldMat);
+        lidRibbonB.position.copy(lid.position);
+        lidPivot.add(lidRibbonB);
+
+        var bow = new THREE.Group();
+        bow.position.set(0, 0.13, 0);
+        var loop1 = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.042, 8, 16), goldMat);
+        loop1.rotation.x = Math.PI / 2;
+        loop1.rotation.z = 0.55;
+        loop1.position.x = -0.09;
+        bow.add(loop1);
+        var loop2 = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.042, 8, 16), goldMat);
+        loop2.rotation.x = Math.PI / 2;
+        loop2.rotation.z = -0.55;
+        loop2.position.x = 0.09;
+        bow.add(loop2);
+        var knot = new THREE.Mesh(new THREE.SphereGeometry(0.085, 10, 10), goldMat);
+        bow.add(knot);
+        lid.add(bow);
+
+        return group;
+      }
+
+      /* ---------- photo keepsake card ---------- */
+
+      var photoMat = null;
+
+      function buildPhotoCard(tex) {
+        var group = new THREE.Group();
+
+        var frame = new THREE.Mesh(
+          new THREE.PlaneGeometry(1.55, 1.55),
+          new THREE.MeshStandardMaterial({ color: 0xe7b866, emissive: 0xe7b866, emissiveIntensity: 0.35, roughness: 0.35, metalness: 0.5, side: THREE.DoubleSide })
+        );
+        group.add(frame);
+
+        photoMat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
+        var photo = new THREE.Mesh(new THREE.PlaneGeometry(1.38, 1.38), photoMat);
+        photo.position.z = 0.01;
+        group.add(photo);
+
+        var backGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+          map: moonGlowTex, color: 0xfff3d6, transparent: true,
+          blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.55
+        }));
+        backGlow.scale.set(3.6, 3.6, 1);
+        backGlow.position.z = -0.05;
+        group.add(backGlow);
+
+        return group;
+      }
+
+      /* ---------- sparkles (bling) ---------- */
+
+      // Each particle starts scattered far out in the darkness and flies in toward
+      // its resting spot near the lantern once the tap/click trigger fires; the
+      // spawn moment is staggered per-particle so the fireflies appear gradually.
+      // After arriving they settle into the same gentle hover used for the final
+      // "bling" ambience.
+      function createSparkles() {
+        var count = 130;
+        var base = new Float32Array(count * 3);
+        var startOffset = new Float32Array(count * 3);
+        var phase = new Float32Array(count);
+        var speed = new Float32Array(count);
+        var size = new Float32Array(count);
+        var spawnDelay = new Float32Array(count);
+        var travelDur = new Float32Array(count);
+
+        for (var i = 0; i < count; i++) {
+          var angle = Math.random() * Math.PI * 2;
+          var radius = 1.0 + Math.random() * 3.4;
+          base[i * 3] = Math.cos(angle) * radius;
+          base[i * 3 + 1] = Math.random() * 6.4 - 1.6;
+          base[i * 3 + 2] = Math.sin(angle) * radius;
+
+          var eAngle = Math.random() * Math.PI * 2;
+          var eRadius = 6 + Math.random() * 7;
+          startOffset[i * 3] = Math.cos(eAngle) * eRadius;
+          startOffset[i * 3 + 1] = (Math.random() - 0.3) * 6;
+          startOffset[i * 3 + 2] = Math.sin(eAngle) * eRadius;
+
+          phase[i] = Math.random() * Math.PI * 2;
+          speed[i] = 0.35 + Math.random() * 0.8;
+          size[i] = 40 + Math.random() * 70;
+          spawnDelay[i] = Math.random() * 4.2;
+          travelDur[i] = 1.6 + Math.random() * 2.0;
+        }
+        var geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(base.slice(), 3));
+        geo.setAttribute('aBase', new THREE.BufferAttribute(base, 3));
+        geo.setAttribute('aStartOffset', new THREE.BufferAttribute(startOffset, 3));
+        geo.setAttribute('aPhase', new THREE.BufferAttribute(phase, 1));
+        geo.setAttribute('aSpeed', new THREE.BufferAttribute(speed, 1));
+        geo.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
+        geo.setAttribute('aSpawnDelay', new THREE.BufferAttribute(spawnDelay, 1));
+        geo.setAttribute('aTravelDur', new THREE.BufferAttribute(travelDur, 1));
+
+        var mat = new THREE.ShaderMaterial({
+          uniforms: { uTime: { value: 0 }, uTapTime: { value: 1e6 }, uTexture: { value: sparkGlowTex } },
+          vertexShader: [
+            'attribute vec3 aBase;',
+            'attribute vec3 aStartOffset;',
+            'attribute float aPhase;',
+            'attribute float aSpeed;',
+            'attribute float aSize;',
+            'attribute float aSpawnDelay;',
+            'attribute float aTravelDur;',
+            'uniform float uTime;',
+            'uniform float uTapTime;',
+            'varying float vTwinkle;',
+            'varying float vArrive;',
+            'void main(){',
+            '  float elapsed = uTime - uTapTime;',
+            '  float localT = clamp((elapsed - aSpawnDelay) / aTravelDur, 0.0, 1.0);',
+            '  float spawned = step(0.0, elapsed - aSpawnDelay);',
+            '  float ease = localT * localT * (3.0 - 2.0 * localT);',
+            '  vec3 p = aBase + aStartOffset * (1.0 - ease);',
+            '  p.x += sin(uTime * aSpeed + aPhase) * 0.3 * ease;',
+            '  p.y += sin(uTime * aSpeed * 0.6 + aPhase * 1.7) * 0.55 * ease;',
+            '  p.z += cos(uTime * aSpeed * 0.8 + aPhase) * 0.3 * ease;',
+            '  vTwinkle = 0.35 + 0.65 * sin(uTime * aSpeed * 2.0 + aPhase * 3.0);',
+            '  vArrive = spawned * smoothstep(0.0, 0.12, localT);',
+            '  vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);',
+            '  gl_PointSize = aSize * (1.0 / -mvPosition.z);',
+            '  gl_Position = projectionMatrix * mvPosition;',
+            '}'
+          ].join('\n'),
+          fragmentShader: [
+            'uniform sampler2D uTexture;',
+            'varying float vTwinkle;',
+            'varying float vArrive;',
+            'void main(){',
+            '  vec4 tex = texture2D(uTexture, gl_PointCoord);',
+            '  gl_FragColor = vec4(tex.rgb, tex.a * vTwinkle * vArrive);',
+            '}'
+          ].join('\n'),
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending
+        });
+
+        return new THREE.Points(geo, mat);
+      }
+
+      var sparkles = createSparkles();
+      scene.add(sparkles);
+
+      /* ---------- interaction ---------- */
+
+      var mouseX = 0, mouseY = 0, camYaw = 0, camPitch = 0, camLookY = 1.7;
+
+      window.addEventListener('pointermove', function (e) {
+        mouseX = (e.clientX / innerWidth) * 2 - 1;
+        mouseY = (e.clientY / innerHeight) * 2 - 1;
+        if (!hintEl.classList.contains('faded')) hintEl.classList.add('faded');
+      });
+      window.addEventListener('touchstart', function (e) {
+        if (!hintEl.classList.contains('faded')) hintEl.classList.add('faded');
+      }, { passive: true });
+      window.addEventListener('touchmove', function (e) {
+        if (e.touches && e.touches[0]) {
+          mouseX = (e.touches[0].clientX / innerWidth) * 2 - 1;
+          mouseY = (e.touches[0].clientY / innerHeight) * 2 - 1;
+        }
+      }, { passive: true });
+
+      window.addEventListener('resize', function () {
+        camera.aspect = innerWidth / innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+      });
+
+      /* ---------- intro sequence: dark -> fireflies -> lantern reveal ---------- */
+
+      var started = false;
+      var tapTime = 1e6;
+      var overlayRevealed = false;
+      var FIREFLY_SPREAD = 4.2;   // matches the spawnDelay random range above
+      var REVEAL_DELAY = 2.2;     // seconds after tap before the lantern starts lighting up
+      var REVEAL_DURATION = 3.4;  // seconds for the light ramp to complete
+      var revealT = 0;
+
+      function startSequence() {
+        if (started) return;
+        started = true;
+        tapTime = clock.getElapsedTime();
+        sparkles.material.uniforms.uTapTime.value = tapTime;
+        introLayer.classList.add('hidden');
+      }
+
+      startBtn.addEventListener('click', startSequence);
+      introLayer.addEventListener('click', startSequence);
+      window.addEventListener('keydown', function (e) {
+        if (!started && (e.key === 'Enter' || e.key === ' ')) startSequence();
+      });
+
+      /* ---------- hint / action-button helpers ---------- */
+
+      var hintFadeTimer = null;
+      function showHint(text, autoFadeMs) {
+        hintEl.textContent = text;
+        hintEl.classList.remove('faded');
+        if (hintFadeTimer) clearTimeout(hintFadeTimer);
+        if (autoFadeMs) {
+          hintFadeTimer = setTimeout(function () { hintEl.classList.add('faded'); }, autoFadeMs);
+        }
+      }
+      function hideHint() {
+        hintEl.classList.add('faded');
+        if (hintFadeTimer) clearTimeout(hintFadeTimer);
+      }
+      function setActionBtn(label, visible) {
+        actionBtn.textContent = label;
+        if (visible) actionBtn.classList.add('visible');
+        else actionBtn.classList.remove('visible');
+      }
+
+      /* ---------- release the lantern -> gift box falls -> open -> photo ---------- */
+
+      var released = false, releaseStartTime = 0, releaseBaseY = 0;
+      var RISE_RANGE = 9.2;
+      var RELEASE_DURATION = 4.2;
+
+      var boxGroup = null;
+      var boxFalling = false, boxLanded = false, boxFallStart = 0, boxLandTime = 0;
+      var boxStartY = 11, boxLandY = 0;
+      var BOX_FALL_DURATION = 1.5;
+
+      var boxOpened = false, lidTweenStart = 0;
+      var LID_OPEN_DURATION = 0.7;
+      var LID_TARGET_ANGLE = Math.PI * 0.6;
+
+      var photoCard = null, photoRevealing = false, photoRevealStart = 0, photoPulseStart = 0;
+
+      function triggerRelease() {
+        if (released) return;
+        released = true;
+        releaseStartTime = clock.getElapsedTime();
+        releaseBaseY = lanternAnchor.position.y;
+        body.material.transparent = true;
+        mainGoldMat.transparent = true;
+        mainTasselMat.transparent = true;
+        mainStringMat.transparent = true;
+        hideHint();
+        setActionBtn('', false);
+        spawnBurst(getWorldPos(lanternGroup), 0xffd27a, 42, 2.6, 1.1);
+      }
+
+      function beginBoxFall() {
+        if (!boxGroup) {
+          boxGroup = buildGiftBox();
+          scene.add(boxGroup);
+          boxLandY = ground.position.y;
+        }
+        boxGroup.position.set(0, boxStartY, 0);
+        boxGroup.rotation.set(0, 0, 0);
+        boxFalling = true;
+        boxFallStart = clock.getElapsedTime();
+      }
+
+      function openBoxAnimation() {
+        if (boxOpened) return;
+        boxOpened = true;
+        lidTweenStart = clock.getElapsedTime();
+        var p = getWorldPos(boxGroup);
+        p.y += 0.7;
+        spawnBurst(p, 0xffe3a8, 46, 3.2, 1.3);
+        spawnBurst(p, 0xff9a6a, 26, 2.2, 1.1);
+      }
+
+      /* function promptForPhoto() {
+        photoInput.click();
+      } */
+
+      function handleBoxInteract() {
+        if (!boxLanded) return;
+        if (!boxOpened) {
+          openBoxAnimation();
+          hideHint();
+        }
+        loadImageAsSquareTexture(photo.src, function (tex) {
+          if (tex) showPhoto(tex);
+        });
+        /* promptForPhoto();
+        setActionBtn('🖼️ Đổi ảnh khác', true); */
+      }
+
+      function showPhoto(tex) {
+        if (!photoCard) {
+          photoCard = buildPhotoCard(tex);
+          var wp = getWorldPos(boxGroup);
+          photoCard.position.set(wp.x, wp.y + 1.05, wp.z);
+          photoCard.scale.set(0.001, 0.001, 0.001);
+          scene.add(photoCard);
+          photoRevealStart = clock.getElapsedTime();
+          photoRevealing = true;
+        } else {
+          photoMat.map = tex;
+          photoMat.needsUpdate = true;
+          photoPulseStart = clock.getElapsedTime();
+        }
+      }
+
+      /* photoInput.addEventListener('change', function (e) {
+        var file = e.target.files && e.target.files[0];
+        photoInput.value = '';
+        if (!file) return;
+        loadImageAsSquareTexture(file, function (tex) {
+          if (tex) showPhoto(tex);
+        });
+      }); */
+
+      actionBtn.addEventListener('click', function () {
+        if (!started || revealT < 0.999) return;
+        if (!released) triggerRelease();
+        else if (boxLanded) handleBoxInteract();
+      });
+
+      var raycaster = new THREE.Raycaster();
+      var pointerNDC = new THREE.Vector2();
+      renderer.domElement.addEventListener('click', function (e) {
+        if (!started || revealT < 0.999) return;
+        var rect = renderer.domElement.getBoundingClientRect();
+        pointerNDC.set(
+          ((e.clientX - rect.left) / rect.width) * 2 - 1,
+          -((e.clientY - rect.top) / rect.height) * 2 + 1
+        );
+        raycaster.setFromCamera(pointerNDC, camera);
+
+        if (!released) {
+          if (raycaster.intersectObject(lanternGroup, true).length) {
+            triggerRelease();
+          }
+          return;
+        }
+        if (boxLanded) {
+          var targets = photoCard ? [boxGroup, photoCard] : [boxGroup];
+          if (raycaster.intersectObjects(targets, true).length) {
+            handleBoxInteract();
+          }
+        }
+      });
+
+      /* ---------- animation loop ---------- */
+
+      var clock = new THREE.Clock();
+
+      function animate() {
+        requestAnimationFrame(animate);
+        var t = clock.getElapsedTime();
+
+        if (started) {
+          var elapsedSinceTap = t - tapTime;
+          var progress = (elapsedSinceTap - REVEAL_DELAY) / REVEAL_DURATION;
+          revealT = Math.max(0, Math.min(1, progress));
+        } else {
+          revealT = 0;
+        }
+        var eased = revealT * revealT * (3.0 - 2.0 * revealT);
+
+        ambient.intensity = 0.55 * eased;
+        moonLight.intensity = 0.85 * eased;
+        rimLight.intensity = 0.5 * eased;
+        moon.material.emissiveIntensity = 0.55 * eased;
+        moonGlow.material.opacity = eased;
+        stars.material.uniforms.uOpacity.value = eased;
+        body.material.emissiveIntensity = 0.85 * eased;
+
+        bgLanterns.forEach(function (item) {
+          var c = item.cfg;
+          item.swing.rotation.z = Math.sin(t * c.speed + c.phase) * c.amp;
+          item.swing.rotation.x = Math.cos(t * c.speed * 0.8 + c.phase) * (c.amp * 0.5);
+          item.mat.emissiveIntensity = BG_LANTERN_EMISSIVE * eased;
+          item.light.intensity = BG_LANTERN_LIGHT * eased;
+        });
+
+        swingGroup.rotation.z = Math.sin(t * 0.6) * 0.09 + Math.sin(t * 0.23) * 0.03;
+        swingGroup.rotation.x = Math.cos(t * 0.5) * 0.03;
+
+        var flicker = 0.85 + Math.sin(t * 9.0) * 0.08 + Math.sin(t * 23.0) * 0.05 + (Math.random() - 0.5) * 0.05;
+        candleLight.intensity = 2.1 * flicker * eased;
+        flameGlow.material.opacity = (0.7 * flicker + 0.2) * eased;
+
+        stars.material.uniforms.uTime.value = t;
+        sparkles.material.uniforms.uTime.value = t;
+
+        moon.position.y = 15.5 + Math.sin(t * 0.15) * 0.3;
+        moonGlow.position.copy(moon.position);
+
+        if (started && !overlayRevealed && revealT > 0.55) {
+          overlayRevealed = true;
+          overlayEl.classList.add('revealed');
+          showHint('Chạm vào lồng đèn để thả đèn lên trời', 8000);
+          setActionBtn('🏮 Chạm để thả đèn lồng', true);
+        }
+
+        // --- lantern release: rises, drifts and fades, then the gift box falls ---
+        if (released) {
+          var relE = Math.min((t - releaseStartTime) / RELEASE_DURATION, 1);
+          var riseEase = 1 - Math.pow(1 - relE, 2);
+          lanternAnchor.position.y = releaseBaseY + RISE_RANGE * riseEase;
+          lanternAnchor.position.x = Math.sin(t * 0.5) * 0.8 * relE;
+          lanternAnchor.position.z = Math.cos(t * 0.4) * 0.5 * relE;
+          lanternGroup.rotation.y += 0.004;
+
+          if (relE > 0.6) {
+            var fadeOp = 1 - (relE - 0.6) / 0.4;
+            body.material.opacity = fadeOp;
+            mainGoldMat.opacity = fadeOp;
+            mainTasselMat.opacity = fadeOp;
+            mainStringMat.opacity = fadeOp;
+            flameGlow.material.opacity *= fadeOp;
+            candleLight.intensity *= fadeOp;
+          }
+          if (relE >= 1 && lanternAnchor.visible) {
+            lanternAnchor.visible = false;
+            beginBoxFall();
+          }
+        }
+
+        // --- gift box: falling, landing squash, and settle ---
+        if (boxFalling) {
+          var fe = Math.min((t - boxFallStart) / BOX_FALL_DURATION, 1);
+          var fallEase = fe * fe;
+          boxGroup.position.y = boxStartY + (boxLandY - boxStartY) * fallEase;
+          boxGroup.rotation.y = fe * 1.1;
+          boxGroup.rotation.z = Math.sin(fe * 8.0) * 0.15 * (1 - fe);
+          if (fe >= 1) {
+            boxFalling = false;
+            boxLanded = true;
+            boxGroup.position.y = boxLandY;
+            boxGroup.rotation.z = 0;
+            boxLandTime = t;
+            spawnBurst(boxGroup.position.clone().add(new THREE.Vector3(0, 0.1, 0)), 0xffe3a8, 30, 2.0, 0.9);
+            showHint('Chạm vào hộp quà để mở', 8000);
+            setActionBtn('🎁 Chạm để mở quà', true);
+          }
+        }
+        if (boxLanded && boxGroup) {
+          if (boxLandTime && (t - boxLandTime) < 0.35) {
+            var bt = (t - boxLandTime) / 0.35;
+            boxGroup.scale.set(1.12 - 0.12 * bt, 0.82 + 0.18 * bt, 1.12 - 0.12 * bt);
+          } else {
+            boxGroup.scale.set(1, 1, 1);
+          }
+        }
+
+        // --- gift box lid opening tween ---
+        if (boxOpened && lidPivot) {
+          var lt = Math.min((t - lidTweenStart) / LID_OPEN_DURATION, 1);
+          var lidEase = 1 - Math.pow(1 - lt, 3);
+          lidPivot.rotation.x = -LID_TARGET_ANGLE * lidEase;
+        }
+
+        // --- floating keepsake photo card ---
+        if (photoCard) {
+          if (photoRevealing) {
+            var pt = Math.min((t - photoRevealStart) / 0.8, 1);
+            var pScale = pt < 1 ? Math.max(backOutEase(pt), 0) : 1;
+            photoCard.scale.set(pScale, pScale, pScale);
+            if (pt >= 1) photoRevealing = false;
+          } else if (photoPulseStart) {
+            var ppt = t - photoPulseStart;
+            if (ppt < 0.3) {
+              var pulse = 1 + 0.15 * Math.sin((ppt / 0.3) * Math.PI);
+              photoCard.scale.set(pulse, pulse, pulse);
+            } else {
+              photoCard.scale.set(1, 1, 1);
+              photoPulseStart = 0;
+            }
+          }
+          var boxWp = boxGroup ? getWorldPos(boxGroup) : new THREE.Vector3(0, 0, 0);
+          photoCard.position.set(boxWp.x, boxWp.y + 1.05 + Math.sin(t * 0.8) * 0.06, boxWp.z);
+          photoCard.rotation.y = Math.sin(t * 0.5) * 0.25;
+        }
+
+        updateBursts(t);
+
+        var desiredLookY = 1.7;
+        if (released) desiredLookY = Math.min(lanternAnchor.position.y, 8.5);
+        if (boxFalling || boxLanded) desiredLookY = boxGroup ? Math.max(boxGroup.position.y, -1.0) : desiredLookY;
+        if (boxOpened) desiredLookY = 0.6;
+        camLookY += (desiredLookY - camLookY) * 0.02;
+
+        camYaw += ((mouseX * 0.5) - camYaw) * 0.03;
+        camPitch += ((-mouseY * 0.18) - camPitch) * 0.03;
+        camera.position.x = Math.sin(camYaw) * camDist;
+        camera.position.z = Math.cos(camYaw) * camDist;
+        camera.position.y = 3.3 + camPitch * 3.2;
+        camera.lookAt(0, camLookY, 0);
+
+        renderer.render(scene, camera);
+      }
+
+      requestAnimationFrame(animate);
+      loadingEl.classList.add('hidden');
+    })();
+  </script>
+</body>
+
+</html>
