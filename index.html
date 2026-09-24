@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>MAYN</title>
+  <title>###</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Be+Vietnam+Pro:wght@300;400&display=swap" rel="stylesheet">
@@ -198,11 +198,6 @@
       align-items: flex-start;
       gap: 12px;
     }
-    
-    #photoInput {
-      aspect-ratio: 1 / 1;
-      position: absolute;
-    }
 
     .action-btn {
       pointer-events: auto;
@@ -313,7 +308,8 @@
     </button>
   </div>
 
-  <audio src="so_easy_romantik.mp3" id="audioInput" loop></audio>
+  <audio src="magic world.wav" id="audioInput" loop></audio>
+  <audio src="open_box.mp3" id="openBoxInput"></audio>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
@@ -328,6 +324,7 @@
       var startBtn = document.getElementById('startBtn');
       var actionBtn = document.getElementById('actionBtn');
       var audioInput = document.getElementById('audioInput');
+      var openBoxInput = document.getElementById('openBoxInput');
 
       if (typeof THREE === 'undefined') {
         loadingEl.innerHTML = '<span style="color:#e7b866">Không thể tải thư viện three.js. Vui lòng kiểm tra kết nối mạng và tải lại trang.</span>';
@@ -921,17 +918,16 @@
 
       /* ---------- scattered photos (burst out of the box onto the ground) ---------- */
 
-      // List of photo sources to scatter. Add more by giving another element
-      // the same "data:image/..." src pattern (like the existing #photoInput
-      // image below in the HTML), then push its .src into this array — each
-      // URL gets its own texture and its own flying card. The floating
-      // "hero" card above the box shows the first photo that loads.
-      var GIFT_PHOTO_URLS = ['gift', 'mayn1', 'mayn2', 'mayn3', 'mayn4', 'mayn5', 'mayn6', 'mayn7', 'mayn8', 'mayn9', 'mayn10'];
+      // List of photo sources to scatter. Each name is loaded as "<name>.jpg"
+      // sitting next to this HTML file. The floating "hero" card above the
+      // box shows the first photo that loads successfully.
+      var GIFT_PHOTO_URLS = ['gift', 'mayn1', 'mayn2', 'mayn3', 'mayn4', 'mayn5', 'mayn6', 'mayn7', 'mayn8', 'mayn9', 'mayn10', 'mayn11', 'mayn12', 'mayn13', 'mayn14', 'mayn15', 'mayn16'];
       var giftPhotoTextures = [];
       var scatterPhotos = [];
       var heroPending = false;
       var SCATTER_GRAVITY = 9.0;
       var SCATTER_MAX_CARDS = 14;
+      var SCATTER_CARD_SIZE = 1.4; // width === height below -> always a perfect 1:1 square
 
       function ensureGiftPhotoTextures(callback) {
         if (giftPhotoTextures.length === GIFT_PHOTO_URLS.length) { callback(giftPhotoTextures); return; }
@@ -958,21 +954,21 @@
         for (var i = 0; i < count; i++) {
           var tex = valid[i % valid.length];
           var mesh = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.55, 0.55),
+            new THREE.PlaneGeometry(SCATTER_CARD_SIZE, SCATTER_CARD_SIZE),
             new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide })
           );
           mesh.position.copy(originPos);
           scene.add(mesh);
 
-          var angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.6;
-          var speed = 1.0 + Math.random() * 1.0;
-          var vel = new THREE.Vector3(Math.cos(angle) * speed, 3.0 + Math.random() * 1.6, Math.sin(angle) * speed);
+          var angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+          var speed = 1.8 + Math.random() * 1.6;
+          var vel = new THREE.Vector3(Math.cos(angle) * speed, 3.2 + Math.random() * 1.6, Math.sin(angle) * speed);
           var angVel = new THREE.Vector3((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
 
           scatterPhotos.push({
             mesh: mesh, start: originPos.clone(), vel: vel, angVel: angVel,
             born: clock.getElapsedTime(), landed: false,
-            landY: boxLandY + 0.01 * i + 0.02,
+            landY: boxLandY + 0.015 * i + 0.02,
             finalRotY: Math.random() * Math.PI * 2
           });
         }
@@ -989,7 +985,13 @@
           if (y <= sp.landY) {
             sp.landed = true;
             sp.mesh.position.set(x, sp.landY, z);
-            sp.mesh.rotation.set(-Math.PI / 2, sp.finalRotY, 0);
+            // Reset first, then apply the vertical spin BEFORE tipping flat.
+            // Doing it in the opposite order (tip flat, then spin) makes the
+            // "spin" rotate around a tilted axis instead of straight up,
+            // which is what was knocking photos over on landing.
+            sp.mesh.rotation.set(0, 0, 0);
+            sp.mesh.rotateY(sp.finalRotY);
+            sp.mesh.rotateX(-Math.PI / 2);
           } else {
             sp.mesh.position.set(x, y, z);
             sp.mesh.rotation.x += sp.angVel.x * 0.016;
@@ -1285,6 +1287,7 @@
       /* ---------- animation loop ---------- */
 
       var clock = new THREE.Clock();
+      var isOpen = false;
 
       function animate() {
         requestAnimationFrame(animate);
@@ -1328,9 +1331,8 @@
         moon.position.y = 15.5 + Math.sin(t * 0.15) * 0.3;
         moonGlow.position.copy(moon.position);
 
+        audioInput.play();
         if (started && !overlayRevealed && revealT > 0.55) {
-          audioInput.play();
-          
           overlayRevealed = true;
           overlayEl.classList.add('revealed');
           showHint('Chạm vào lồng đèn để thả đèn lên trời', 8000);
@@ -1387,9 +1389,12 @@
             boxGroup.scale.set(1, 1, 1);
           }
         }
-
         // --- gift box lid opening tween ---
         if (boxOpened && lidPivot) {
+          if (!isOpen) {
+            openBoxInput.play();
+            isOpen = true;
+          }
           var lt = Math.min((t - lidTweenStart) / LID_OPEN_DURATION, 1);
           var lidEase = 1 - Math.pow(1 - lt, 3);
           lidPivot.rotation.x = -LID_TARGET_ANGLE * lidEase;
