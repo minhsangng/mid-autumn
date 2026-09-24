@@ -35,12 +35,11 @@
       .border-around .bottom-left {
         width: 14rem !important;
         height: 7rem !important;
-        margin-left: -1rem;
+        margin-left: -2rem;
       }
       .border-around .bottom-right {
         width: 24rem !important;
         height: 14rem !important;
-        margin-right: -1rem;
         margin-bottom: -2rem !important;
       }
     }
@@ -61,7 +60,7 @@
       padding: 0;
       width: 100%;
       height: 100%;
-      background: var(--bg-a);
+      background: #0f3d85;
       overflow: hidden;
       font-family: 'Absolute VH', system-ui, sans-serif;
     }
@@ -126,7 +125,7 @@
     
     .start-btn {
       pointer-events: auto;
-      color: rgb(168, 35, 35);
+      color: rgb(237, 70, 70);
       margin-top: 2.5rem;
       text-shadow: 1px 1px 10px #e6b84e, -1px -1px 10px #ffffff;
       font-size: 2.5rem;
@@ -176,7 +175,6 @@
     .heading p {
       margin: 10px 0 0;
       font-size: 1.75rem;
-      line-height: 1.6;
       color: var(--ink-dim);
       text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
     }
@@ -249,6 +247,7 @@
       justify-content: space-between;
       align-items: flex-end;
       opacity: 0;
+      box-shadow: inset 0 0 15px #e6b84e;
       transition: all 1s linear;
     }
     
@@ -256,6 +255,36 @@
       width: 20rem;
       height: 8rem;
       margin-bottom: -1rem;
+    }
+    
+    .sign-box {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      padding-bottom: 3rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: .1rem;
+      opacity: 0;
+      transform: translate(-50%, -50%);
+      transition: all 1s linear;
+    }
+    
+    .sign-box.revealed {
+      opacity: 1;
+    }
+    
+    .sign-box .sign-msg {
+      color: #fff;
+      font-size: 1.85rem;
+    }
+    
+    .sign-box .sign-msg::after {
+      content: '\2193';
+      display: block;
+      text-align: center;
     }
 
     #loading {
@@ -303,7 +332,6 @@
 </head>
 
 <body>
-
   <div id="loading">
     <div class="lantern-mark">🏮</div>
   </div>
@@ -313,9 +341,7 @@
   <div class="overlay" id="overlay">
     <div class="heading">
       <h1>Trung Thu 2026</h1>
-      <p>Chúc cho em sẽ luôn gặp nhiều điều may mắn, mọi thứ như ý nguyện. <br /> Chúc em luôn tỏa sáng như ánh Trăng rằm.</p>
-      <br />
-      <p>Happy Mid-Autumn Bae!!!</p>
+      <p>Chúc cho bé sẽ luôn gặp nhiều điều may mắn, mọi thứ sẽ như ý nguyện. <br /> Chúc bé sẽ có thể cười nhiều, hạnh phúc hơn nữa nhé.</p>
     </div>
     <div class="bottom-row">
       <div class="hint" id="hint">Di chuyển chuột hoặc chạm màn hình để ngắm đèn lồng từ nhiều góc</div>
@@ -328,12 +354,17 @@
   </div>
   
   <div class="border-around">
-    <img src="bottom_left.png" class="bottom-left" alt="">
-    <img src="bottom_right.png" class="bottom-right" alt="">
+    <img src="bottom_left.png" class="bottom-left" alt="Bottom left">
+    <img src="bottom_right.png" class="bottom-right" alt="Bottom right">
   </div>
-
+  
+  <div class="sign-box">
+    <p class="sign-msg">Gift for you</p>
+  </div>
+  
   <audio src="magic world.wav" id="audioInput" loop></audio>
   <audio src="open_box.mp3" id="openBoxInput"></audio>
+  <audio src="effect.mp3" id="effectInput"></audio>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
@@ -345,11 +376,13 @@
       var stage = document.getElementById('stage');
       var overlayEl = document.getElementById('overlay');
       var borderEl = document.querySelector('.border-around');
+      var signBoxEl = document.querySelector('.sign-box');
       var introLayer = document.getElementById('introLayer');
       var startBtn = document.getElementById('startBtn');
       var actionBtn = document.getElementById('actionBtn');
       var audioInput = document.getElementById('audioInput');
       var openBoxInput = document.getElementById('openBoxInput');
+      var effectInput = document.getElementById('effectInput');
 
       if (typeof THREE === 'undefined') {
         loadingEl.innerHTML = '<span style="color:#e7b866">Không thể tải thư viện three.js. Vui lòng kiểm tra kết nối mạng và tải lại trang.</span>';
@@ -1313,6 +1346,7 @@
 
       var clock = new THREE.Clock();
       var isOpen = false;
+      var isShowGift = false;
 
       function animate() {
         requestAnimationFrame(animate);
@@ -1417,18 +1451,23 @@
         }
         // --- gift box lid opening tween ---
         if (boxOpened && lidPivot) {
+          var lt = Math.min((t - lidTweenStart) / LID_OPEN_DURATION, 1);
+          var lidEase = 1 - Math.pow(1 - lt, 3);
+          lidPivot.rotation.x = -LID_TARGET_ANGLE * lidEase;
+          
           if (!isOpen) {
             openBoxInput.play();
             borderEl.classList.remove('revealed');
             isOpen = true;
           }
-          var lt = Math.min((t - lidTweenStart) / LID_OPEN_DURATION, 1);
-          var lidEase = 1 - Math.pow(1 - lt, 3);
-          lidPivot.rotation.x = -LID_TARGET_ANGLE * lidEase;
         }
 
         // --- floating keepsake photo card ---
         if (photoCard) {
+          if (!isShowGift) {
+            effectInput.play();
+            isShowGift = true;
+          }
           if (photoRevealing) {
             var pt = Math.min((t - photoRevealStart) / 0.8, 1);
             var pScale = pt < 1 ? Math.max(backOutEase(pt), 0) : 1;
@@ -1447,6 +1486,7 @@
           var boxWp = boxGroup ? getWorldPos(boxGroup) : new THREE.Vector3(0, 0, 0);
           photoCard.position.set(boxWp.x, boxWp.y + 2.25 + Math.sin(t * 0.8) * 0.06, boxWp.z);
           photoCard.rotation.y = Math.sin(t * 0.5) * 0.25;
+          signBoxEl.classList.add('revealed');
         }
         
         updateBursts(t);
